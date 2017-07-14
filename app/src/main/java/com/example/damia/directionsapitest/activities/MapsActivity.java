@@ -1,4 +1,4 @@
-package com.example.damia.directionsapitest;
+package com.example.damia.directionsapitest.activities;
 
 import android.*;
 import android.Manifest;
@@ -12,6 +12,9 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import com.example.damia.directionsapitest.*;
+import com.example.damia.directionsapitest.R;
+import com.example.damia.directionsapitest.data.DirectionsData;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -32,14 +35,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private final int LOCATION_PERMISSION = 1;
     MarkerOptions user;
-    private int optionsPosition = 1;
+    private int optionsPosition = 0;
 
     private ArrayList<MarkerOptions> markerOptions;
+
+    DirectionsData data;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+        setContentView(com.example.damia.directionsapitest.R.layout.activity_maps);
         addMapFragment();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -49,6 +54,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
 
         markerOptions = new ArrayList<>();
+        data = new DirectionsData();
+        for(int i = 0; i < 2; i++)
+            markerOptions.add(null);
 
     }
 
@@ -59,16 +67,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onMapClick(LatLng latLng) {
                 MarkerOptions options = new MarkerOptions().position(latLng);
+                options.title(optionsPosition + "");
                 mMap.addMarker(options);
-                markerOptions.add(optionsPosition, options);
-                if(optionsPosition == 1)
-                    optionsPosition = 2;
-                else
-                    optionsPosition = 1;
+                markerOptions.set(0, markerOptions.get(1));
+                markerOptions.add(1, options);
 
                 Log.v("MAPS", "" + optionsPosition);
                 Log.v("lat", "" + options.getPosition().latitude);
                 Log.v("lon", "" + options.getPosition().longitude);
+                data.downloadDirectionsData(markerOptions);
             }
         });
     }
@@ -99,7 +106,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         user = new MarkerOptions().position(latLng);
         mMap.addMarker(user);
-        markerOptions.add(user);
+        markerOptions.add(1, user);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
     }
 
