@@ -1,5 +1,6 @@
 package com.example.damia.directionsapitest.data;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.util.Log;
 
@@ -9,12 +10,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.damia.directionsapitest.activities.MapsActivity;
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
 
 import org.json.JSONArray;
@@ -36,9 +33,14 @@ public class DirectionsData {
     final String URL_API_KEY = "&key=AIzaSyD-d8GLSFKBNN6cojQbeScvpTRtkWI4eYg";
 
     public OnDownloadCompleteListener onDownloadComplete;
+    public OnJSONExceptionListener onJSONExceptionListener;
 
     public interface OnDownloadCompleteListener{
         void downloadComplete(List<LatLng> points);
+    }
+
+    public interface OnJSONExceptionListener{
+        void onJSONException();
     }
 
     private static DirectionsData instance = null;
@@ -55,6 +57,7 @@ public class DirectionsData {
     private DirectionsData(Context context) {
         requestQueue = Volley.newRequestQueue(context.getApplicationContext());
         onDownloadComplete = (OnDownloadCompleteListener) context;
+        onJSONExceptionListener = (OnJSONExceptionListener) context;
     }
 
     public void downloadDirectionsData(ArrayList<MarkerOptions> markerOptions){
@@ -75,6 +78,7 @@ public class DirectionsData {
                     onDownloadComplete.downloadComplete(points);
                     Log.v("POLY", PolyUtil.decode(encodedPolyline).toString());
                 }catch(JSONException e){
+                    onJSONExceptionListener.onJSONException();
                     Log.v("JSON", e.getLocalizedMessage());
                 }
             }

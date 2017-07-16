@@ -1,6 +1,7 @@
 package com.example.damia.directionsapitest.activities;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.NonNull;
@@ -29,7 +30,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, DirectionsData.OnDownloadCompleteListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, DirectionsData.OnDownloadCompleteListener, DirectionsData.OnJSONExceptionListener {
 
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -58,6 +59,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         data = DirectionsData.getInstance(this);
 
+        // expanding size of markerOptions array to avoid null pointer errors
         for(int i = 0; i < 2; i++)
             markerOptions.add(null);
 
@@ -89,11 +91,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void downloadComplete(List<LatLng> points) {
+        Log.v("DOWNLOAD", "download complete");
         PolylineOptions polylineOptions = new PolylineOptions();
         for(int i = 0; i < points.size(); i++){
             polylineOptions.add(points.get(i));
         }
         mMap.addPolyline(polylineOptions);
+    }
+
+    @Override
+    public void onJSONException() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setMessage("No direction data exists for this path, locations must be close to roads")
+                .setCancelable(true)
+                .setNegativeButton("OK", null);
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 
     @Override
