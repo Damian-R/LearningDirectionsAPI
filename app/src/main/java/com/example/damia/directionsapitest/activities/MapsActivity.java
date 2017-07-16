@@ -1,6 +1,5 @@
 package com.example.damia.directionsapitest.activities;
 
-import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -12,7 +11,6 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import com.example.damia.directionsapitest.*;
 import com.example.damia.directionsapitest.R;
 import com.example.damia.directionsapitest.data.DirectionsData;
 import com.google.android.gms.common.ConnectionResult;
@@ -26,10 +24,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, DirectionsData.OnDownloadCompleteListener {
 
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -45,6 +45,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(com.example.damia.directionsapitest.R.layout.activity_maps);
+
         addMapFragment();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -54,7 +55,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
 
         markerOptions = new ArrayList<>();
-        data = new DirectionsData();
+
+        data = DirectionsData.getInstance(this);
+
         for(int i = 0; i < 2; i++)
             markerOptions.add(null);
 
@@ -66,11 +69,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
+                mMap.clear();
+
                 MarkerOptions options = new MarkerOptions().position(latLng);
                 options.title(optionsPosition + "");
-                mMap.addMarker(options);
                 markerOptions.set(0, markerOptions.get(1));
                 markerOptions.add(1, options);
+
+                mMap.addMarker(markerOptions.get(0));
+                mMap.addMarker(markerOptions.get(1));
 
                 Log.v("MAPS", "" + optionsPosition);
                 Log.v("lat", "" + options.getPosition().latitude);
@@ -78,6 +85,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 data.downloadDirectionsData(markerOptions);
             }
         });
+    }
+
+    @Override
+    public void downloadComplete(List<LatLng> points) {
+        PolylineOptions polylineOptions = new PolylineOptions();
+        for(int i = 0; i < points.size(); i++){
+            polylineOptions.add(points.get(i));
+        }
+        mMap.addPolyline(polylineOptions);
     }
 
     @Override
